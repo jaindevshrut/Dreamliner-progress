@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dreamliner Progress Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2d3e;
+      --accent:    #6c63ff;
+      --accent2:   #00d4aa;
+      --text:      #e2e8f0;
+      --muted:     #8892a4;
+      --green:     #22c55e;
+      --yellow:    #eab308;
+      --red:       #ef4444;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    header .logo {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header p  { font-size: .85rem; color: var(--muted); margin-top: .15rem; }
+    .last-updated { margin-left: auto; font-size: .8rem; color: var(--muted); text-align: right; }
+
+    /* ── Stat Cards ───────────────────────────────────────── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .card .label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .card .sub { font-size: .8rem; color: var(--muted); margin-top: .4rem; }
+    .card.green  { border-color: var(--green);  }
+    .card.yellow { border-color: var(--yellow); }
+    .card.purple { border-color: var(--accent);  }
+    .card.teal   { border-color: var(--accent2); }
+    .card.green  .value { color: var(--green);  }
+    .card.yellow .value { color: var(--yellow); }
+    .card.purple .value { color: var(--accent);  }
+    .card.teal   .value { color: var(--accent2); }
+
+    /* ── Charts ───────────────────────────────────────────── */
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .chart-box h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+    .chart-box canvas { max-height: 260px; }
+
+    /* ── Table ────────────────────────────────────────────── */
+    .table-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+    }
+    .table-box h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th {
+      text-align: left;
+      padding: .6rem 1rem;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .65rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.03); }
+    .badge {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .badge.pos { background: rgba(34,197,94,.15);  color: var(--green);  }
+    .badge.neu { background: rgba(139,146,164,.15); color: var(--muted);  }
+
+    /* ── Error / Loading ──────────────────────────────────── */
+    #error-msg {
+      display: none;
+      background: rgba(239,68,68,.12);
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    #loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">✈️</div>
+  <div>
+    <h1>Dreamliner Progress</h1>
+    <p>Daily task &amp; earnings tracker</p>
+  </div>
+  <div class="last-updated" id="last-updated"></div>
+</header>
+
+<div id="error-msg">⚠️ Could not load history data. Make sure <code>data/history.json</code> exists.</div>
+<div id="loading">Loading data…</div>
+
+<div id="dashboard" style="display:none">
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card green">
+      <div class="label">Total Approved Tasks</div>
+      <div class="value" id="c-total-tasks">–</div>
+      <div class="sub">cumulative approved</div>
+    </div>
+    <div class="card teal">
+      <div class="label">Total Earnings</div>
+      <div class="value" id="c-total-earn">–</div>
+      <div class="sub" id="c-breakdown">–</div>
+    </div>
+    <div class="card yellow">
+      <div class="label">Pending Approval</div>
+      <div class="value" id="c-pending-count">–</div>
+      <div class="sub" id="c-pending-earn">–</div>
+    </div>
+    <div class="card purple">
+      <div class="label">Today's Tasks</div>
+      <div class="value" id="c-today-tasks">–</div>
+      <div class="sub" id="c-today-earn">–</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+    <div class="chart-box">
+      <h2>📈 Daily Tasks Completed</h2>
+      <canvas id="chart-tasks"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2>💰 Daily Earnings (₹)</h2>
+      <canvas id="chart-earnings"></canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-box">
+    <h2>📋 Day-by-Day History</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Tasks Today</th>
+          <th>Earnings Today (₹)</th>
+          <th>Total Tasks</th>
+          <th>Total Earnings (₹)</th>
+          <th>Pending</th>
+        </tr>
+      </thead>
+      <tbody id="history-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const DATA_URL = 'data/history.json';
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const fmt  = n => Number(n).toLocaleString('en-IN');
+  const $    = id => document.getElementById(id);
+
+  function buildCharts(labels, dailyTasks, dailyEarnings) {
+    const gridColor  = 'rgba(255,255,255,.06)';
+    const tickColor  = '#8892a4';
+    const baseOpts   = {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { color: tickColor, maxTicksLimit: 10 },
+          grid:  { color: gridColor },
+        },
+        y: {
+          ticks: { color: tickColor },
+          grid:  { color: gridColor },
+          beginAtZero: true,
+        },
+      },
+    };
+
+    new Chart($('chart-tasks'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Tasks',
+          data: dailyTasks,
+          backgroundColor: 'rgba(108,99,255,.7)',
+          borderRadius: 5,
+        }],
+      },
+      options: baseOpts,
+    });
+
+    new Chart($('chart-earnings'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Earnings',
+          data: dailyEarnings,
+          borderColor: '#00d4aa',
+          backgroundColor: 'rgba(0,212,170,.12)',
+          pointBackgroundColor: '#00d4aa',
+          tension: .35,
+          fill: true,
+        }],
+      },
+      options: baseOpts,
+    });
+  }
+
+  function buildTable(history) {
+    const tbody = $('history-table');
+    // newest first
+    [...history].reverse().forEach(row => {
+      const tr = document.createElement('tr');
+      const badgeCls = row.daily_tasks > 0 ? 'pos' : 'neu';
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td><span class="badge ${badgeCls}">+${row.daily_tasks}</span></td>
+        <td>₹${fmt(row.daily_earnings)}</td>
+        <td>${fmt(row.cumulative_approved_count)}</td>
+        <td>₹${fmt(row.cumulative_total_earnings)}</td>
+        <td>${fmt(row.pending_count)} <span style="color:var(--muted);font-size:.75rem">(₹${fmt(row.pending_earnings)})</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── Main ───────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const res = await fetch(DATA_URL + '?_=' + Date.now());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const history = await res.json();
+
+      $('loading').style.display = 'none';
+
+      if (!Array.isArray(history) || history.length === 0) {
+        $('error-msg').textContent =
+          '📭 No data yet. The GitHub Action will populate data/history.json at midnight.';
+        $('error-msg').style.display = 'block';
+        return;
+      }
+
+      $('dashboard').style.display = 'block';
+
+      const latest = history[history.length - 1];
+
+      // Summary cards
+      $('c-total-tasks').textContent  = fmt(latest.cumulative_approved_count);
+      $('c-total-earn').textContent   = '₹' + fmt(latest.cumulative_total_earnings);
+      $('c-breakdown').textContent    = latest.earnings_breakdown || '';
+      $('c-pending-count').textContent= fmt(latest.pending_count);
+      $('c-pending-earn').textContent = '₹' + fmt(latest.pending_earnings) + ' potential';
+      $('c-today-tasks').textContent  = fmt(latest.daily_tasks);
+      $('c-today-earn').textContent   = '₹' + fmt(latest.daily_earnings) + ' today';
+
+      $('last-updated').innerHTML =
+        `Last updated<br><strong>${latest.date}</strong>`;
+
+      // Chart data
+      const labels       = history.map(r => r.date);
+      const dailyTasks   = history.map(r => r.daily_tasks);
+      const dailyEarnings = history.map(r => r.daily_earnings);
+
+      try {
+        buildCharts(labels, dailyTasks, dailyEarnings);
+      } catch (chartErr) {
+        console.warn('Charts unavailable:', chartErr.message);
+        document.querySelectorAll('.chart-box').forEach(el => {
+          el.innerHTML = `<p style="color:var(--muted);font-size:.85rem">📊 Charts require an internet connection to load Chart.js.</p>`;
+        });
+      }
+      buildTable(history);
+
+    } catch (err) {
+      $('loading').style.display = 'none';
+      $('error-msg').style.display = 'block';
+      $('error-msg').textContent =
+        `⚠️ Failed to load data/history.json – ${err.message}`;
+      console.error(err);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
