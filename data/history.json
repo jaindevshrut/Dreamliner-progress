@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "date": "2026-03-31",
+    "cumulative_approved_count": 410,
+    "cumulative_approved_earnings": 32800,
+    "cumulative_total_earnings": 32860,
+    "pending_count": 55,
+    "pending_earnings": 3300,
+    "daily_tasks": 410,
+    "daily_earnings": 32800,
+    "earnings_breakdown": "410 approved x 80 Rs = 32800 Rs + 1 non-performable x 60 Rs = 60 Rs = 32860 Rs"
+  }
+]
