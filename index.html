@@ -177,11 +177,6 @@
       <div class="value" id="c-total-earn">–</div>
       <div class="sub" id="c-breakdown">–</div>
     </div>
-    <div class="card yellow">
-      <div class="label">Pending Approval</div>
-      <div class="value" id="c-pending-count">–</div>
-      <div class="sub" id="c-pending-earn">–</div>
-    </div>
     <div class="card purple">
       <div class="label">Today's Tasks</div>
       <div class="value" id="c-today-tasks">–</div>
@@ -212,7 +207,6 @@
           <th>Earnings Today (₹)</th>
           <th>Total Tasks</th>
           <th>Total Earnings (₹)</th>
-          <th>Pending</th>
         </tr>
       </thead>
       <tbody id="history-table"></tbody>
@@ -290,7 +284,6 @@
         <td>₹${fmt(row.daily_earnings)}</td>
         <td>${fmt(row.cumulative_approved_count)}</td>
         <td>₹${fmt(row.cumulative_total_earnings)}</td>
-        <td>${fmt(row.pending_count)} <span style="color:var(--muted);font-size:.75rem">(₹${fmt(row.pending_earnings)})</span></td>
       `;
       tbody.appendChild(tr);
     });
