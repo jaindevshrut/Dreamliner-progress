@@ -313,8 +313,6 @@
       $('c-total-tasks').textContent  = fmt(latest.cumulative_approved_count);
       $('c-total-earn').textContent   = '₹' + fmt(latest.cumulative_total_earnings);
       $('c-breakdown').textContent    = latest.earnings_breakdown || '';
-      $('c-pending-count').textContent= fmt(latest.pending_count);
-      $('c-pending-earn').textContent = '₹' + fmt(latest.pending_earnings) + ' potential';
       $('c-today-tasks').textContent  = fmt(latest.daily_tasks);
       $('c-today-earn').textContent   = '₹' + fmt(latest.daily_earnings) + ' today';
 
