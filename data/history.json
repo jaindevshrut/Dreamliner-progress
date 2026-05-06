@@ -394,5 +394,16 @@
     "daily_tasks": 0,
     "daily_earnings": 0,
     "earnings_breakdown": "452 approved x 80 Rs = 36160 Rs + 1 non-performable x 60 Rs = 60 Rs = 36220 Rs"
+  },
+  {
+    "date": "2026-05-06",
+    "cumulative_approved_count": 454,
+    "cumulative_approved_earnings": 36320,
+    "cumulative_total_earnings": 36380,
+    "pending_count": 55,
+    "pending_earnings": 3300,
+    "daily_tasks": 2,
+    "daily_earnings": 160,
+    "earnings_breakdown": "454 approved x 80 Rs = 36320 Rs + 1 non-performable x 60 Rs = 60 Rs = 36380 Rs"
   }
 ]
